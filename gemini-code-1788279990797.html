@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Poetry Sanctuary | 诗歌图鉴</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    body { background-color: #121212; font-family: 'Noto Serif SC', serif; }
+    .font-retro { font-family: 'Cinzel', serif; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    
+    /* 点击卡片时的微缩反馈 */
+    .polaroid-png {
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+    .polaroid-png:active { transform: scale(0.93); opacity: 0.9; }
+  </style>
+</head>
+<body class="flex justify-center items-center min-h-screen">
+
+  <div id="app" class="w-full max-w-md bg-[#f4f4f5] h-screen relative overflow-hidden shadow-2xl flex flex-col">
+    
+    <!-- 1. 主界面 -->
+    <main v-if="currentPage === 'home'" class="relative w-full h-full flex flex-col justify-between overflow-hidden bg-[#121212]">
+      <div class="absolute inset-0 opacity-80 z-0">
+        <!-- 背景图 -->
+        <img src="https://placehold.co/800x1200/222222/c8aa6e?text=Latest+Peg-Doll+Figure" class="w-full h-full object-cover" />
+      </div>
+      <div class="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-[#121212] z-10"></div>
+      
+      <div class="relative z-20 p-6 flex justify-between items-start text-[#c8aa6e]">
+        <div>
+          <p class="font-retro text-sm tracking-widest">LV. 70</p>
+          <p class="text-xs opacity-70 tracking-widest">ID: 19 Z 1</p>
+        </div>
+        <div class="font-retro text-xl tracking-[0.2em] font-bold text-right">POETRY<br>SANCTUARY</div>
+      </div>
+
+      <div class="relative z-20 p-6 pb-16 flex flex-col items-end space-y-4">
+        <div class="w-full text-right mb-2">
+          <p class="font-retro text-[#c8aa6e] text-lg tracking-widest border-b border-[#c8aa6e]/30 pb-1 inline-block">THE SHOW</p>
+        </div>
+        <button @click="currentPage = 'gallery'" class="w-48 bg-black/60 border border-[#c8aa6e] backdrop-blur-sm p-3 flex justify-between items-center text-gray-200 text-sm tracking-widest cursor-pointer hover:bg-black/80 transition">
+          <span>诗歌图鉴</span>
+          <span class="font-retro text-[#c8aa6e] font-bold">ENTER →</span>
+        </button>
+        <button class="w-40 bg-black/40 border border-gray-500/50 backdrop-blur-sm p-2 flex justify-between items-center text-gray-400 text-xs tracking-widest hover:bg-black/60 transition">
+          <span>关于作者</span>
+          <span class="font-retro">ABOUT</span>
+        </button>
+      </div>
+    </main>
+
+    <!-- 2. 图鉴页面 -->
+    <section v-else-if="currentPage === 'gallery'" class="w-full h-full bg-[#f4f4f5] flex flex-col overflow-hidden relative">
+      
+      <!-- 顶栏 -->
+      <div class="bg-[#121212] text-white p-3.5 px-4 flex justify-between items-center shrink-0 shadow-md relative z-20">
+        <button @click="currentPage = 'home'" class="text-xs text-[#c8aa6e] font-bold cursor-pointer">← 返回主页</button>
+        <div class="flex items-center gap-3">
+          <div class="text-right">
+            <span class="font-retro text-xs tracking-widest text-[#c8aa6e] block">GALLERY</span>
+            <span class="text-[10px] text-gray-400 block truncate max-w-[120px]">{{ activeCategory }} ({{ filteredPoems.length }})</span>
+          </div>
+          <button @click="isFilterOpen = true" class="w-8 h-8 rounded border border-[#c8aa6e]/40 bg-black/50 text-[#c8aa6e] flex items-center justify-center cursor-pointer">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
+          </button>
+        </div>
+      </div>
+    
+      <!-- 主网格区域：使用百分比负边距精细压紧行距 -->
+      <div class="flex-1 overflow-y-auto px-6 pt-2 pb-16 grid grid-cols-4 gap-x-3 items-start no-scrollbar relative z-10">
+        <div 
+          v-for="poem in filteredPoems" 
+          :key="poem.id"
+          @click="openModal(poem)"
+          :class="[
+            'polaroid-png cursor-pointer flex items-start justify-center relative overflow-visible',
+            poem.span === 2 ? 'col-span-2 -mb-[45%]' : 'col-span-1 -mb-[35%]'
+          ]"
+        >
+          <!-- 动态图片缩放，适配双栏和单栏 -->
+          <img 
+            :src="poem.image" 
+            :alt="poem.title" 
+            :class="[
+              'w-full h-auto block drop-shadow-md select-none pointer-events-none transform origin-top',
+              poem.span === 2 ? 'scale-[0.88]' : 'scale-125'
+            ]" 
+          />
+        </div>
+      </div>
+
+      <!-- 分类抽屉 (Filter) -->
+      <div v-if="isFilterOpen" class="absolute inset-0 bg-black/60 z-30 backdrop-blur-sm" @click="isFilterOpen = false"></div>
+      <div v-if="isFilterOpen" class="absolute bottom-0 left-0 right-0 bg-[#1a1a1a] text-white z-40 rounded-t-2xl p-5 border-t border-[#c8aa6e]/30 max-h-[75vh] flex flex-col shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+        <div class="flex justify-between items-center border-b border-gray-800 pb-3 mb-4">
+          <span class="font-retro text-sm text-[#c8aa6e] font-bold">SELECT CATEGORY</span>
+          <button @click="isFilterOpen = false" class="text-gray-400 text-xs">✕ 关闭</button>
+        </div>
+        <div class="overflow-y-auto space-y-2 no-scrollbar pr-1 pb-4">
+          <button 
+            v-for="cat in categories" 
+            :key="cat"
+            @click="activeCategory = cat; isFilterOpen = false;"
+            :class="['w-full text-left px-4 py-2.5 rounded-lg text-xs font-bold flex justify-between items-center cursor-pointer transition', activeCategory === cat ? 'bg-[#c8aa6e] text-black font-bold shadow-md' : 'bg-white/5 text-gray-300 hover:bg-white/10']"
+          >
+            <span>{{ cat }}</span>
+            <span v-if="activeCategory === cat">✓</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 3. 诗歌阅读弹窗 (整合优化版) -->
+      <div v-if="selectedPoem" class="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm">
+        <div class="bg-[#fefdfb] w-full max-w-md h-[85vh] rounded-t-2xl flex flex-col overflow-hidden relative shadow-2xl">
+          
+          <!-- Header -->
+          <div class="p-4 flex justify-between items-center bg-[#1e1e1e] border-b border-white/5">
+            <span class="text-xs font-bold text-[#d4af37] tracking-wide font-serif">{{ selectedPoem.category }}</span>
+            <button @click="selectedPoem = null" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-bold flex items-center justify-center cursor-pointer transition">✕</button>
+          </div>
+          
+          <!-- 弹窗顶部展示完整的破框拍立得 PNG -->
+          <div class="w-full h-[45%] bg-[#e5e5e5] flex items-center justify-center p-6 relative">
+            <img :src="selectedPoem.image" :alt="selectedPoem.title" class="h-full w-auto object-contain drop-shadow-xl relative z-10" />
+          </div>
+          
+          <!-- 诗歌正文 -->
+          <div class="flex-1 overflow-y-auto p-8 no-scrollbar bg-white">
+            <h2 class="text-xl font-bold text-[#1a1a1a] mb-6 text-center font-serif">《{{ selectedPoem.title }}》</h2>
+            <div class="text-gray-700 leading-relaxed text-sm whitespace-pre-wrap text-center font-serif">{{ selectedPoem.content }}</div>
+          </div>
+          
+        </div>
+      </div>
+
+    </section>
+  </div>
+
+  <script>
+    const { createApp, ref, computed } = Vue;
+
+    createApp({
+      setup() {
+        const currentPage = ref('home');
+        const isFilterOpen = ref(false);
+        const activeCategory = ref('2026 - 时隙悬园'); // 设置默认打开含有数据的分类
+        const selectedPoem = ref(null);
+
+        const categories = [
+          '全部', '愚者之旅', '2026 - 时隙悬园', '2025 - 缘起鹊桥', '2024 - 余韵高台',
+          '2023 - 旧忆长廊', '2022 - 馨香大殿', '2021 - 流光长廊', '2020 - 瑰梦序厅',
+          '新春特辑系列', '中秋特辑系列', '圣诞特辑系列', '心理学原创系列', '世时雨系列'
+        ];
+
+        // 拍立得数据
+        const poems = ref([
+          { id: 1, title: '她的时差', category: '2026 - 时隙悬园', image: './images/66601.png', content: '（此处为诗歌正文排版效果预览）\n\n时光在指尖悄然溜走，\n我们在不同的维度驻足。' },
+          { id: 2, title: '他的时差', category: '2026 - 时隙悬园', image: './images/66602.png', content: '《他的时差》诗歌正文...' },
+          { id: 3, title: '若因情故', category: '2026 - 时隙悬园', image: './images/66603.png', content: '《若因情故》诗歌正文...' },
+          { id: 4, title: '山河依旧曲', category: '2026 - 时隙悬园', image: './images/66604.png', content: '《山河依旧曲》诗歌正文...' },
+          { id: 5, title: '春·意义', category: '2026 - 时隙悬园', image: './images/66605.png', content: '《春·意义》诗歌正文...' },
+          { id: 6, title: 'Poem for Two', category: '2026 - 时隙悬园', image: './images/6606.png', span: 2, content: '《Poem for Two》诗歌正文...' },
+          { id: 7, title: '茶无上品 适口为珍', category: '2026 - 时隙悬园', image: './images/6607.png', content: '《茶无上品 适口为珍》诗歌正文...' },
+          { id: 8, title: '物是人非', category: '2026 - 时隙悬园', image: './images/6608.png', content: '《物是人非》诗歌正文...' },
+          { id: 9, title: '时间的玩笑', category: '2026 - 时隙悬园', image: './images/6609.png', content: '《时间的玩笑》诗歌正文...' },
+          { id: 10, title: '无锡早晨八时的雨', category: '2026 - 时隙悬园', image: './images/6610.png', content: '《无锡早晨八时的雨》诗歌正文...' },
+          { id: 11, title: '一首青春一回梦', category: '2026 - 时隙悬园', image: './images/6611.png', content: '《一首青春一回梦》诗歌正文...' },
+          { id: 12, title: '应急预案', category: '2026 - 时隙悬园', image: './images/6612.png', content: '《应急预案》诗歌正文...' },
+          { id: 13, title: 'Disposable Revelry', category: '2026 - 时隙悬园', image: './images/6613.png', content: '《Disposable Revelry》诗歌正文...' },
+        ])
+        
+        const filteredPoems = computed(() => {
+          if (activeCategory.value === '全部') return poems.value;
+          return poems.value.filter(poem => poem.category === activeCategory.value);
+        });
+
+        const openModal = (poem) => {
+          selectedPoem.value = poem;
+        };
+
+        return {
+          currentPage, isFilterOpen, categories, activeCategory,
+          poems, filteredPoems, selectedPoem, openModal
+        };
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>
